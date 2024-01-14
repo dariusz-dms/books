@@ -1,123 +1,96 @@
-// Przykładowe importy, dostosuj je do swojego projektu
-import Handlebars from 'handlebars';
-import bookTemplate from './path/to/bookTemplate.hbs';
+// Referencje do szablonu i listy
+const bookTemplate = document.getElementById("template-book").innerHTML;
+const booksList = document.querySelector(".books-list");
 
-class BooksList {
-  constructor() {
-    // Inicjalizacja danych
-    this.initData();
+// Inicjalizacja tablicy ulubionych książek
+const favoriteBooks = [];
 
-    // Inicjalizacja elementów DOM
-    this.getElements();
+// Funkcja obsługująca dodawanie do ulubionych po dwukrotnym kliknięciu
+function handleFavoriteClick(event) {
+  const clickedImage = event.target;
+  const bookElement = clickedImage.closest(".book"); // Znajdowanie najbliższego rodzica z klasą 'book'
+  const bookId = bookElement.getAttribute("data-id");
 
-    // Inicjalizacja nasłuchiwaczy zdarzeń
-    this.initActions();
+  // Sprawdzenie, czy książka jest już ulubiona
+  const isBookFavorite = favoriteBooks.includes(bookId);
 
-    // Renderowanie książek
-    this.renderBooks();
+  // Dodawanie/Usuwanie z ulubionych w zależności od statusu
+  if (isBookFavorite) {
+    // Usunięcie z ulubionych
+    const index = favoriteBooks.indexOf(bookId);
+    favoriteBooks.splice(index, 1);
+  } else {
+    // Dodanie do ulubionych
+    favoriteBooks.push(bookId);
   }
 
-  initData() {
-    // Inicjalizacja danych
-    this.data = dataSource.books; // Upewnij się, że dataSource.books jest zdefiniowane
-    this.favoriteBooks = [];
-    this.filters = [];
-  }
-
-  getElements() {
-    // Referencje do elementów DOM
-    this.booksList = document.querySelector('.books-list');
-    this.filtersForm = document.querySelector('.filters form');
-  }
-
-  initActions() {
-    // Dodanie nasłuchiwacza dla całej listy .books-list
-    this.booksList.addEventListener('click', this.handleBookClick.bind(this));
-
-    // Dodanie nasłuchiwacza dla formularza
-    this.filtersForm.addEventListener('click', this.handleFilterClick.bind(this));
-  }
-
-  handleBookClick(event) {
-    // Obsługa kliknięcia na książkę
-    const bookImage = event.target.closest('.book__image');
-    if (bookImage) {
-      const bookId = bookImage.getAttribute('data-id');
-      const isBookFavorite = this.favoriteBooks.includes(bookId);
-
-      if (!isBookFavorite) {
-        bookImage.classList.add('favorite');
-        this.favoriteBooks.push(bookId);
-      } else {
-        const index = this.favoriteBooks.indexOf(bookId);
-        this.favoriteBooks.splice(index, 1);
-        bookImage.classList.remove('favorite');
-      }
-
-      // Filtruj książki po zmianie w ulubionych
-      this.filterBooks();
-    }
-  }
-
-  handleFilterClick(event) {
-    // Obsługa kliknięcia w checkbox w formularzu
-    if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox' && event.target.name === 'filter') {
-      const filterValue = event.target.value;
-
-      if (event.target.checked) {
-        if (!this.filters.includes(filterValue)) {
-          this.filters.push(filterValue);
-        }
-      } else {
-        const index = this.filters.indexOf(filterValue);
-        if (index !== -1) {
-          this.filters.splice(index, 1);
-        }
-      }
-
-      // Aktualizacja wybranych filtrów
-      console.log(this.filters);
-
-      // Filtruj książki po zmianie w filtrach
-      this.filterBooks();
-    }
-  }
-
-  filterBooks() {
-    // Filtracja książek
-    for (const book of this.data) {
-      let shouldBeHidden = false;
-
-      for (const filter of this.filters) {
-        if (!book.details[filter]) {
-          shouldBeHidden = true;
-          break;
-        }
-      }
-
-      const bookImage = this.booksList.querySelector(`.book__image[data-id="${book.id}"]`);
-
-      if (bookImage) {
-        if (shouldBeHidden) {
-          bookImage.classList.add('hidden');
-        } else {
-          bookImage.classList.remove('hidden');
-        }
-      }
-    }
-  }
-
-  renderBooks() {
-    // Renderowanie książek
-    this.data.forEach(book => {
-      const html = Handlebars.compile(bookTemplate)(book);
-      const bookElement = document.createElement('li');
-      bookElement.classList.add('book');
-      bookElement.innerHTML = html;
-      this.booksList.appendChild(bookElement);
-    });
-  }
+  // Aktualizacja klasy favorite na obrazku książki
+  clickedImage.classList.toggle("favorite", !isBookFavorite);
 }
 
-// Inicjalizacja aplikacji
-const app = new BooksList();
+// Dodanie nasłuchiwacza zdarzeń dla dwukrotnego kliknięcia na obrazek książki
+booksList.addEventListener("dblclick", event => {
+  if (event.target.classList.contains("book__image")) {
+    handleFavoriteClick(event);
+  }
+});
+
+// Funkcja inicjalizująca jednokrotne nasłuchiwacze zdarzeń dla całej listy
+function initActions() {
+  // Referencja do listy wszystkich elementów .book__image w liście .booksList
+  const bookImages = document.querySelectorAll(".books-list .book__image");
+
+  // Przejście po każdym elemencie z listy
+  bookImages.forEach(bookImage => {
+    // Dodanie nasłuchiwacza
+    bookImage.addEventListener("dblclick", function (event) {
+      // Zatrzymanie domyślnego zachowania przeglądarki
+      event.preventDefault();
+
+      // Pobranie identyfikatora książki z data-id
+      const bookId = this.getAttribute("data-id");
+
+      // Sprawdzenie, czy książka jest już w ulubionych
+      const isBookFavorite = favoriteBooks.includes(bookId);
+
+      // Jeśli książka nie jest w ulubionych
+      if (!isBookFavorite) {
+        // Dodanie klasy favorite
+        this.classList.add("favorite");
+
+        // Dodanie identyfikatora do favoriteBooks
+        favoriteBooks.push(bookId);
+      } else {
+        // Usunięcie z ulubionych
+        const index = favoriteBooks.indexOf(bookId);
+        favoriteBooks.splice(index, 1);
+
+        // Usunięcie klasy favorite
+        this.classList.remove("favorite");
+      }
+    });
+  });
+}
+
+// Funkcja renderująca książki
+function renderBooks() {
+  dataSource.books.forEach(book => {
+    // Generowanie kodu HTML na podstawie szablonu i danych książki
+    const html = Handlebars.compile(bookTemplate)(book);
+
+    // Tworzenie elementu DOM z wygenerowanego HTML
+    const bookElement = document.createElement("li");
+    bookElement.classList.add("book");
+    bookElement.setAttribute("data-id", book.id); // Dodanie atrybutu z identyfikatorem książki
+    bookElement.innerHTML = html;
+
+    // Dodawanie nowego elementu do listy .books-list
+    booksList.appendChild(bookElement);
+  });
+}
+
+// Wywołanie funkcji renderującej
+renderBooks();
+
+// Inicjalizacja nasłuchiwaczy zdarzeń
+initActions();
