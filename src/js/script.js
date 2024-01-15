@@ -59,14 +59,38 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   
     function renderBooks() {
-      dataSource.books.forEach(book => {
-        const html = Handlebars.compile(bookTemplate)(book);
-        const bookElement = document.createElement("li");
-        bookElement.classList.add("book");
-        bookElement.setAttribute("data-id", book.id);
-        bookElement.innerHTML = html;
-        booksList.appendChild(bookElement);
-      });
+        dataSource.books.forEach(book => {
+          const ratingBgc = determineRatingBgc(book.rating);
+          const ratingWidth = (book.rating / 10) * 100;
+      
+          const html = Handlebars.compile(bookTemplate)({
+            name: book.name,
+            price: book.price,
+            image: book.image,
+            id: book.id,
+            ratingBgc: ratingBgc,
+            ratingWidth: ratingWidth,
+            rating: book.rating,  // Dodaj tę linijkę
+          });
+      
+          const bookElement = document.createElement("li");
+          bookElement.classList.add("book");
+          bookElement.setAttribute("data-id", book.id);
+          bookElement.innerHTML = html;
+          booksList.appendChild(bookElement);
+        });
+      }
+  
+    function determineRatingBgc(rating) {
+      if (rating < 6) {
+        return "linear-gradient(to bottom,  #fefcea 0%, #f1da36 100%)";
+      } else if (rating > 6 && rating <= 8) {
+        return "linear-gradient(to bottom, #b4df5b 0%,#b4df5b 100%)";
+      } else if (rating > 8 && rating <= 9) {
+        return "linear-gradient(to bottom, #299a0b 0%, #299a0b 100%)";
+      } else {
+        return "linear-gradient(to bottom, #ff0084 0%,#ff0084 100%)";
+      }
     }
   
     function filterBooks() {
@@ -110,3 +134,4 @@ document.addEventListener("DOMContentLoaded", function () {
     renderBooks();
     initActions();
   });
+  
