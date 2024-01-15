@@ -25,7 +25,7 @@ figure {
     display: inline-block;
     margin: 10px 30px;
     position: relative;
-    transition: .2s;
+    transition: opacity 0.2s; /* Dodanie efektu przejścia opacity */
 
     &::after {
       content: "\f004";
@@ -43,16 +43,16 @@ figure {
       top: -20px;
       right: -20px;
       font-size: 40px;
-      text-shadow: 0 0 20px rgba(0,0,0,0.2);
+      text-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
       opacity: 0;
     }
 
-    &:hover:after {
+    &:hover::after {
       opacity: 0.5;
     }
 
     &.favorite {
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
       transform: scale(1.1);
 
       &::after {
@@ -76,5 +76,4 @@ figure {
       width: 100%;
     }
   }
-
 }

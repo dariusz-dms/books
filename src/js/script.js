@@ -1,96 +1,112 @@
-// Referencje do szablonu i listy
-const bookTemplate = document.getElementById("template-book").innerHTML;
-const booksList = document.querySelector(".books-list");
-
-// Inicjalizacja tablicy ulubionych książek
-const favoriteBooks = [];
-
-// Funkcja obsługująca dodawanie do ulubionych po dwukrotnym kliknięciu
-function handleFavoriteClick(event) {
-  const clickedImage = event.target;
-  const bookElement = clickedImage.closest(".book"); // Znajdowanie najbliższego rodzica z klasą 'book'
-  const bookId = bookElement.getAttribute("data-id");
-
-  // Sprawdzenie, czy książka jest już ulubiona
-  const isBookFavorite = favoriteBooks.includes(bookId);
-
-  // Dodawanie/Usuwanie z ulubionych w zależności od statusu
-  if (isBookFavorite) {
-    // Usunięcie z ulubionych
-    const index = favoriteBooks.indexOf(bookId);
-    favoriteBooks.splice(index, 1);
-  } else {
-    // Dodanie do ulubionych
-    favoriteBooks.push(bookId);
-  }
-
-  // Aktualizacja klasy favorite na obrazku książki
-  clickedImage.classList.toggle("favorite", !isBookFavorite);
-}
-
-// Dodanie nasłuchiwacza zdarzeń dla dwukrotnego kliknięcia na obrazek książki
-booksList.addEventListener("dblclick", event => {
-  if (event.target.classList.contains("book__image")) {
-    handleFavoriteClick(event);
-  }
-});
-
-// Funkcja inicjalizująca jednokrotne nasłuchiwacze zdarzeń dla całej listy
-function initActions() {
-  // Referencja do listy wszystkich elementów .book__image w liście .booksList
-  const bookImages = document.querySelectorAll(".books-list .book__image");
-
-  // Przejście po każdym elemencie z listy
-  bookImages.forEach(bookImage => {
-    // Dodanie nasłuchiwacza
-    bookImage.addEventListener("dblclick", function (event) {
-      // Zatrzymanie domyślnego zachowania przeglądarki
-      event.preventDefault();
-
-      // Pobranie identyfikatora książki z data-id
-      const bookId = this.getAttribute("data-id");
-
-      // Sprawdzenie, czy książka jest już w ulubionych
+document.addEventListener("DOMContentLoaded", function () {
+    const bookTemplate = document.getElementById("template-book").innerHTML;
+    const booksList = document.querySelector(".books-list");
+    const filtersForm = document.querySelector(".filters");
+    const favoriteBooks = [];
+    const filters = [];
+  
+    function handleFavoriteClick(event) {
+      const clickedImage = event.target;
+      const bookElement = clickedImage.closest(".book");
+      const bookId = bookElement.getAttribute("data-id");
       const isBookFavorite = favoriteBooks.includes(bookId);
-
-      // Jeśli książka nie jest w ulubionych
-      if (!isBookFavorite) {
-        // Dodanie klasy favorite
-        this.classList.add("favorite");
-
-        // Dodanie identyfikatora do favoriteBooks
-        favoriteBooks.push(bookId);
-      } else {
-        // Usunięcie z ulubionych
+  
+      if (isBookFavorite) {
         const index = favoriteBooks.indexOf(bookId);
         favoriteBooks.splice(index, 1);
-
-        // Usunięcie klasy favorite
-        this.classList.remove("favorite");
+      } else {
+        favoriteBooks.push(bookId);
+      }
+  
+      updateFavoriteClass(clickedImage, !isBookFavorite);
+    }
+  
+    booksList.addEventListener("click", function (event) {
+      if (event.target.classList.contains("book__image")) {
+        handleFavoriteClick(event);
       }
     });
+  
+    function updateFavoriteClass(imageElement, isFavorite) {
+      const bookElement = imageElement.closest(".book");
+  
+      if (isFavorite) {
+        bookElement.classList.add("favorite");
+      } else {
+        bookElement.classList.remove("favorite");
+      }
+    }
+  
+    function initActions() {
+      const bookImages = document.querySelectorAll(".books-list .book__image");
+  
+      bookImages.forEach(bookImage => {
+        bookImage.addEventListener("dblclick", function (event) {
+          event.preventDefault();
+          const bookId = this.getAttribute("data-id");
+          const isBookFavorite = favoriteBooks.includes(bookId);
+  
+          if (!isBookFavorite) {
+            this.classList.add("favorite");
+            favoriteBooks.push(bookId);
+          } else {
+            const index = favoriteBooks.indexOf(bookId);
+            favoriteBooks.splice(index, 1);
+            this.classList.remove("favorite");
+          }
+        });
+      });
+    }
+  
+    function renderBooks() {
+      dataSource.books.forEach(book => {
+        const html = Handlebars.compile(bookTemplate)(book);
+        const bookElement = document.createElement("li");
+        bookElement.classList.add("book");
+        bookElement.setAttribute("data-id", book.id);
+        bookElement.innerHTML = html;
+        booksList.appendChild(bookElement);
+      });
+    }
+  
+    function filterBooks() {
+      const bookImages = document.querySelectorAll(".books-list .book__image");
+  
+      dataSource.books.forEach(book => {
+        let shouldBeHidden = false;
+  
+        for (const filter of filters) {
+          if (!book.details[filter]) {
+            shouldBeHidden = true;
+            break;
+          }
+        }
+  
+        const bookImage = document.querySelector(`.book__image[data-id="${book.id}"]`);
+  
+        if (shouldBeHidden) {
+          bookImage.classList.add("hidden");
+        } else {
+          bookImage.classList.remove("hidden");
+        }
+      });
+    }
+  
+    filtersForm.addEventListener("change", function (event) {
+      if (event.target.tagName === "INPUT" && event.target.type === "checkbox" && event.target.name === "filter") {
+        const filterValue = event.target.value;
+  
+        if (event.target.checked) {
+          filters.push(filterValue);
+        } else {
+          const index = filters.indexOf(filterValue);
+          filters.splice(index, 1);
+        }
+  
+        filterBooks();
+      }
+    });
+  
+    renderBooks();
+    initActions();
   });
-}
-
-// Funkcja renderująca książki
-function renderBooks() {
-  dataSource.books.forEach(book => {
-    // Generowanie kodu HTML na podstawie szablonu i danych książki
-    const html = Handlebars.compile(bookTemplate)(book);
-
-    // Tworzenie elementu DOM z wygenerowanego HTML
-    const bookElement = document.createElement("li");
-    bookElement.classList.add("book");
-    bookElement.setAttribute("data-id", book.id); // Dodanie atrybutu z identyfikatorem książki
-    bookElement.innerHTML = html;
-
-    // Dodawanie nowego elementu do listy .books-list
-    booksList.appendChild(bookElement);
-  });
-}
-
-// Wywołanie funkcji renderującej
-renderBooks();
-
-// Inicjalizacja nasłuchiwaczy zdarzeń
-initActions();
